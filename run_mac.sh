@@ -3,12 +3,20 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-if [ ! -d venv ]; then
+if [ ! -x venv/bin/python ]; then
   echo "venv not found. Run ./setup_mac.sh first." >&2
+  exit 1
+fi
+if ! command -v ffmpeg >/dev/null 2>&1; then
+  echo "ffmpeg not found. Run ./setup_mac.sh first, or install it with: brew install ffmpeg" >&2
   exit 1
 fi
 
 source venv/bin/activate
+if ! python -c 'import gradio' >/dev/null 2>&1; then
+  echo "Core dependencies are missing. Re-run ./setup_mac.sh." >&2
+  exit 1
+fi
 
 export PYTORCH_ENABLE_MPS_FALLBACK=1
 export GRADIO_SERVER_NAME="${GRADIO_SERVER_NAME:-127.0.0.1}"

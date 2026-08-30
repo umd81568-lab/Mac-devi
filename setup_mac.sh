@@ -9,6 +9,10 @@ if ! command -v python3 >/dev/null 2>&1; then
   echo "python3 not found. Install it first: brew install python@3.11" >&2
   exit 1
 fi
+if ! python3 -c 'import sys; raise SystemExit(sys.version_info < (3, 11))'; then
+  echo "Python 3.11 or newer is required. Install it with: brew install python@3.11" >&2
+  exit 1
+fi
 if ! command -v ffmpeg >/dev/null 2>&1; then
   echo "ffmpeg not found. Installing via Homebrew..."
   if command -v brew >/dev/null 2>&1; then
@@ -20,12 +24,18 @@ if ! command -v ffmpeg >/dev/null 2>&1; then
 fi
 
 echo "==> Creating virtual environment (./venv)..."
-python3 -m venv venv
+if [ ! -x venv/bin/python ]; then
+  python3 -m venv venv
+fi
 source venv/bin/activate
 
 echo "==> Installing core Python dependencies..."
-pip install --upgrade pip
-pip install -r app/requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -r app/requirements.txt
+
+echo "==> Verifying the installation..."
+python -c 'import gradio; print(f"Gradio {gradio.__version__} is ready.")'
+python -m py_compile app/app.py
 
 mkdir -p app/models app/outputs
 

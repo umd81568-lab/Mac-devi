@@ -50,6 +50,24 @@ cd Mac-devi
 ```
 Open the printed URL in your browser — that's it, no other app to install.
 
+### Deployment tips
+- Keep the app local: it binds to `127.0.0.1` by default and does not expose the
+  Gradio interface to your network.
+- Re-run `./setup_mac.sh` after pulling project updates; it verifies Python,
+  `ffmpeg`, the core Gradio dependency, and the application syntax before
+  reporting success.
+- To transfer the complete tracked project to another Mac as a clean ZIP archive,
+  run this from the repository root. The archive excludes virtual environments,
+  downloaded models, and generated media, which should be created locally by
+  `./setup_mac.sh`.
+  ```bash
+  git archive --format=zip --output=BhashaMedia-AI.zip HEAD
+  ```
+- To use a different local port, run:
+  ```bash
+  GRADIO_SERVER_PORT=7861 ./run_mac.sh
+  ```
+
 ### Enable optional facilities
 The app starts immediately with STT, Edge TTS, audio editing, video editing,
 slideshow, and script-to-video all working out of the box (pure Python + ffmpeg).
