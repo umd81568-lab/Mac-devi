@@ -52,6 +52,16 @@ def _run(cmd):
     return proc.returncode, proc.stdout, proc.stderr
 
 
+def _safe_path(path):
+    """Resolve to an absolute path so a filename that happens to start with
+    "-" can never be misparsed as a command-line flag by ffmpeg/CLI tools
+    (defense-in-depth; subprocess is always called with an argv list, never
+    shell=True, so shell metacharacters are never interpreted either way)."""
+    if not path:
+        return path
+    return os.path.abspath(path)
+
+
 # ---------------------------------------------------------------------------
 # Tab 1 — Speech to Text (faster-whisper, fully offline)
 # ---------------------------------------------------------------------------
@@ -229,6 +239,7 @@ def video_to_srt(video_path, model_size, burn_preview):
         return "ভিডিও দিন (provide a video)।", None, None
     if not _ffmpeg_ok():
         return "ffmpeg not found. Run: brew install ffmpeg", None, None
+    video_path = _safe_path(video_path)
     audio_path = _out_path("v2srt_audio", "wav")
     code, _, err = _run(["ffmpeg", "-y", "-i", video_path, "-vn", "-ar", "16000", "-ac", "1", audio_path])
     if code != 0:
@@ -256,6 +267,10 @@ def video_edit(video1, video2, op, trim_start, trim_end, srt_file, bgm_file):
         return None, "প্রথম ভিডিও দিন (provide video 1)."
     if not _ffmpeg_ok():
         return None, "ffmpeg not found. Run: brew install ffmpeg"
+    video1 = _safe_path(video1)
+    video2 = _safe_path(video2)
+    srt_file = _safe_path(srt_file)
+    bgm_file = _safe_path(bgm_file)
     out_path = _out_path("video_edit", "mp4")
 
     if op == "Trim":
@@ -296,12 +311,13 @@ def slideshow(images, seconds_per_image, bgm_file):
     tmp_dir = tempfile.mkdtemp(prefix="slideshow_")
     list_path = os.path.join(tmp_dir, "list.txt")
     dur = max(0.5, float(seconds_per_image or 2))
+    bgm_file = _safe_path(bgm_file)
     with open(list_path, "w") as fh:
         for img in images:
-            path = img if isinstance(img, str) else img.name
+            path = _safe_path(img if isinstance(img, str) else img.name)
             fh.write(f"file '{path}'\nduration {dur}\n")
         last = images[-1]
-        fh.write(f"file '{last if isinstance(last, str) else last.name}'\n")
+        fh.write(f"file '{_safe_path(last if isinstance(last, str) else last.name)}'\n")
     out_path = _out_path("slideshow", "mp4")
     cmd = ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list_path,
            "-vf", "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,format=yuv420p",
@@ -336,7 +352,7 @@ def script_to_video(script_text, images, voice_label):
     clips = []
     per_image = 4.0
     for idx, img in enumerate(images):
-        path = img if isinstance(img, str) else img.name
+        path = _safe_path(img if isinstance(img, str) else img.name)
         clip_path = os.path.join(tmp_dir, f"clip_{idx}.mp4")
         cmd = [
             "ffmpeg", "-y", "-loop", "1", "-i", path, "-t", str(per_image),
@@ -376,12 +392,14 @@ def script_to_video(script_text, images, voice_label):
 def image_to_avatar(image_path, audio_path, script_text, voice_label):
     if not image_path:
         return None, "একটি ছবি দিন (provide a portrait image)."
+    image_path = _safe_path(image_path)
     if not audio_path and script_text and script_text.strip():
         audio_path, msg = edge_tts_speak(script_text, voice_label, 0, 0)
         if not audio_path:
             return None, msg
     if not audio_path:
         return None, "অডিও দিন বা স্ক্রিপ্ট লিখুন (provide audio or a script)."
+    audio_path = _safe_path(audio_path)
 
     sadtalker_dir = os.path.join(MODELS_DIR, "sadtalker_src")
     inference_py = os.path.join(sadtalker_dir, "inference.py")
