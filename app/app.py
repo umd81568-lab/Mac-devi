@@ -517,9 +517,11 @@ def local_diagnostics():
         except (OSError, subprocess.TimeoutExpired):
             return "Not available"
 
+    operating_system = platform.system()
+    os_version = command_output(["sw_vers", "-productVersion"]) if operating_system == "Darwin" else platform.release()
     lines = [
         "Read-only local diagnostic report (no settings or files were changed).",
-        f"macOS: {command_output(['sw_vers', '-productVersion'])}",
+        f"Operating system: {operating_system} {os_version}",
         f"Architecture: {platform.machine()}",
         f"Python: {platform.python_version()}",
         f"ffmpeg: {command_output(['ffmpeg', '-version']).splitlines()[0] if _ffmpeg_ok() else 'Not installed'}",
@@ -529,7 +531,7 @@ def local_diagnostics():
         f"SadTalker source: {'Ready' if os.path.isfile(os.path.join(MODELS_DIR, 'sadtalker_src', 'inference.py')) else 'Not installed'}",
         f"Ollama: {command_output(['ollama', '--version'])}",
     ]
-    if platform.system() == "Darwin":
+    if operating_system == "Darwin":
         memory_bytes = command_output(["sysctl", "-n", "hw.memsize"])
         if memory_bytes.isdigit():
             lines.insert(3, f"Memory: {int(memory_bytes) / (1024 ** 3):.0f} GB")
