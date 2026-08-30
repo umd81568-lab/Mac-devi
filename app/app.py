@@ -209,8 +209,9 @@ def audio_edit(audio1, audio2, op, trim_start, trim_end, gain_db, speed, fade_s)
         seg = seg + float(gain_db or 0)
     elif op == "Speed":
         factor = max(0.5, min(2.0, float(speed or 1.0)))
-        seg = seg._spawn(seg.raw_data, overrides={"frame_rate": int(seg.frame_rate * factor)})
-        seg = seg.set_frame_rate(seg.frame_rate)
+        original_rate = seg.frame_rate
+        seg = seg._spawn(seg.raw_data, overrides={"frame_rate": int(original_rate * factor)})
+        seg = seg.set_frame_rate(original_rate)
     elif op == "Fade":
         fs = int((fade_s or 1) * 1000)
         seg = seg.fade_in(fs).fade_out(fs)
