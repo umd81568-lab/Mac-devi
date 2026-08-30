@@ -1,0 +1,1583 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: studio
+    description: Studio overview and activity
+  - name: projects
+    description: Production projects and script planning
+  - name: system
+    description: Local agent and hardware readiness
+  - name: bridge
+    description: Secure native Mac worker bridge
+  - name: models
+    description: Installed and available AI models
+  - name: providers
+    description: Optional inference provider connections
+  - name: render
+    description: Render queue operations
+  - name: deliverables
+    description: Local voice, presenter, and media deliverables
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /studio/overview:
+    get:
+      operationId: getStudioOverview
+      tags: [studio]
+      summary: Get studio overview
+      responses:
+        "200":
+          description: Studio overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudioOverview"
+  /activity:
+    get:
+      operationId: getActivity
+      tags: [studio]
+      summary: List recent studio activity
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List production projects
+      responses:
+        "200":
+          description: Projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+    post:
+      operationId: createProject
+      tags: [projects]
+      summary: Create a production project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectInput"
+      responses:
+        "201":
+          description: Created project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+  /projects/{projectId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: getProject
+      tags: [projects]
+      summary: Get a project
+      responses:
+        "200":
+          description: Project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateProject
+      tags: [projects]
+      summary: Update a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectUpdate"
+      responses:
+        "200":
+          description: Updated project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      summary: Archive a project
+      responses:
+        "204":
+          description: Project archived
+  /projects/{projectId}/plan:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: getProjectPlan
+      tags: [projects]
+      summary: Get the saved production plan
+      responses:
+        "200":
+          description: Saved production plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionPlan"
+        "404":
+          description: Production plan not found
+    post:
+      operationId: createProjectPlan
+      tags: [projects]
+      summary: Turn a script into a production plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanInput"
+      responses:
+        "200":
+          description: Production plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionPlan"
+    patch:
+      operationId: updateProjectPlan
+      tags: [projects]
+      summary: Update per-scene delivery and subtitle timing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectPlanUpdate"
+      responses:
+        "200":
+          description: Updated production plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionPlan"
+  /system/readiness:
+    get:
+      operationId: getSystemReadiness
+      tags: [system]
+      summary: Get local agent readiness
+      responses:
+        "200":
+          description: Readiness report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessReport"
+  /system/readiness/scan:
+    post:
+      operationId: scanSystemReadiness
+      tags: [system]
+      summary: Run a local agent readiness scan
+      responses:
+        "200":
+          description: Updated readiness report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessReport"
+  /system/bridge/pairing:
+    post:
+      operationId: createBridgePairing
+      tags: [bridge]
+      summary: Create a one-time Mac worker pairing code
+      responses:
+        "201":
+          description: Pairing code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BridgePairing"
+  /system/bridge/handshake:
+    post:
+      operationId: bridgeHandshake
+      tags: [bridge]
+      summary: Register a signed native Mac worker health report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BridgeHandshake"
+      responses:
+        "200":
+          description: Accepted worker report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /system/bridge/heartbeat:
+    post:
+      operationId: bridgeHeartbeat
+      tags: [bridge]
+      summary: Refresh native Mac worker liveness
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BridgeHeartbeat"
+      responses:
+        "200":
+          description: Current worker readiness
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /system/bridge/commands:
+    get:
+      operationId: listBridgeCommands
+      tags: [bridge]
+      summary: List commands waiting for the native Mac worker
+      responses:
+        "200":
+          description: Pending bridge commands
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BridgeCommand"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /system/bridge/commands/{commandId}/ack:
+    parameters:
+      - $ref: "#/components/parameters/CommandId"
+    post:
+      operationId: acknowledgeBridgeCommand
+      tags: [bridge]
+      summary: Acknowledge a native Mac worker command
+      responses:
+        "204":
+          description: Command acknowledged
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /system/bridge/jobs/{jobId}/events:
+    parameters:
+      - $ref: "#/components/parameters/InstallJobId"
+    post:
+      operationId: reportInstallEvent
+      tags: [bridge]
+      summary: Report model setup progress from the native Mac worker
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InstallEvent"
+      responses:
+        "200":
+          description: Updated install job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstallJob"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /system/bridge/studio-jobs/{jobId}/events:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    post:
+      operationId: reportPresenterJobEvent
+      tags: [bridge]
+      summary: Report generated presenter progress from the native Mac worker
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresenterJobEvent"
+      responses:
+        "200":
+          description: Updated presenter job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudioJob"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /system/bridge/studio-jobs/{jobId}/output:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    post:
+      operationId: uploadPresenterOutput
+      tags: [bridge]
+      summary: Upload a verified generated presenter video from the native Mac worker
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresenterOutput"
+      responses:
+        "200":
+          description: Presenter job with generated output metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudioJob"
+        "400":
+          description: Output is not an MP4 generated presenter video
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /system/bridge/studio-jobs/{jobId}/image-output:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    post:
+      operationId: uploadImageOutput
+      tags: [bridge]
+      summary: Upload a locally generated PNG image from the native Mac worker
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImageOutput"
+      responses:
+        "200":
+          description: Image job with generated output metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudioJob"
+        "400":
+          description: Output is not a valid generated PNG
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /system/bridge/credentials/huggingface:
+    post:
+      operationId: reportHuggingFaceCredential
+      tags: [bridge]
+      summary: Confirm a Hugging Face credential was stored in macOS Keychain
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CredentialStoredEvent"
+      responses:
+        "200":
+          description: Updated provider
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Provider"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /models:
+    get:
+      operationId: listModels
+      tags: [models]
+      summary: List AI models and their readiness
+      responses:
+        "200":
+          description: Models
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Model"
+  /models/{modelId}/install:
+    parameters:
+      - $ref: "#/components/parameters/ModelId"
+    get:
+      operationId: getModelInstall
+      tags: [models]
+      summary: Get the current model installation job
+      responses:
+        "200":
+          description: Installation job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstallJob"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      operationId: installModel
+      tags: [models]
+      summary: Request a model installation for approval
+      responses:
+        "202":
+          description: Installation awaiting approval
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstallJob"
+  /models/{modelId}/install/approve:
+    parameters:
+      - $ref: "#/components/parameters/ModelId"
+    post:
+      operationId: approveModelInstall
+      tags: [models]
+      summary: Approve a model installation on the Mac
+      responses:
+        "200":
+          description: Approved installation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstallJob"
+  /models/{modelId}/install/retry:
+    parameters:
+      - $ref: "#/components/parameters/ModelId"
+    post:
+      operationId: retryModelInstall
+      tags: [models]
+      summary: Retry a failed model installation
+      responses:
+        "200":
+          description: Retried installation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstallJob"
+  /providers:
+    get:
+      operationId: listProviders
+      tags: [providers]
+      summary: List configured inference providers
+      responses:
+        "200":
+          description: Providers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Provider"
+  /providers/{providerId}:
+    parameters:
+      - $ref: "#/components/parameters/ProviderId"
+    patch:
+      operationId: updateProvider
+      tags: [providers]
+      summary: Update a provider connection state
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProviderUpdate"
+      responses:
+        "200":
+          description: Updated provider
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Provider"
+  /providers/{providerId}/credential/request:
+    parameters:
+      - $ref: "#/components/parameters/ProviderId"
+    post:
+      operationId: requestProviderCredential
+      tags: [providers]
+      summary: Ask the native Mac worker to collect a provider credential securely
+      responses:
+        "202":
+          description: Credential request queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CredentialRequest"
+  /render-jobs:
+    get:
+      operationId: listRenderJobs
+      tags: [render]
+      summary: List render queue jobs
+      responses:
+        "200":
+          description: Render jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RenderJob"
+    post:
+      operationId: createRenderJob
+      tags: [render]
+      summary: Queue a render job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RenderJobInput"
+      responses:
+        "202":
+          description: Render job queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RenderJob"
+  /render-jobs/{jobId}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    post:
+      operationId: cancelRenderJob
+      tags: [render]
+      summary: Cancel a queued render job
+      responses:
+        "200":
+          description: Cancelled render job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RenderJob"
+  /render-jobs/{jobId}/retry:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    post:
+      operationId: retryRenderJob
+      tags: [render]
+      summary: Retry a failed or cancelled render job
+      responses:
+        "202":
+          description: Render job requeued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RenderJob"
+  /assets:
+    get:
+      operationId: listStudioAssets
+      tags: [deliverables]
+      summary: List imported voice and presenter assets
+      responses:
+        "200":
+          description: Studio assets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StudioAsset"
+    post:
+      operationId: importStudioAsset
+      tags: [deliverables]
+      summary: Import a consented local voice or presenter reference
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudioAssetInput"
+      responses:
+        "201":
+          description: Imported asset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudioAsset"
+  /voice-jobs:
+    post:
+      operationId: createVoiceJob
+      tags: [deliverables]
+      summary: Queue local speech synthesis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VoiceJobInput"
+      responses:
+        "202":
+          description: Voice job queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudioJob"
+  /image-jobs:
+    post:
+      operationId: createImageJob
+      tags: [deliverables]
+      summary: Queue local FLUX image generation on the signed Mac worker
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImageJobInput"
+      responses:
+        "202":
+          description: Image job queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudioJob"
+  /live-call/respond:
+    post:
+      operationId: createLiveCallTurn
+      tags: [deliverables]
+      summary: Generate the next conversational turn with the configured local Ollama model
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LiveCallTurnInput"
+      responses:
+        "200":
+          description: Local assistant response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiveCallTurn"
+        "503":
+          description: Local conversational model is unavailable
+  /presenter-jobs:
+    post:
+      operationId: createPresenterJob
+      tags: [deliverables]
+      summary: Queue presenter lip-sync or scene delivery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresenterJobInput"
+      responses:
+        "202":
+          description: Presenter job queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudioJob"
+  /studio-jobs:
+    get:
+      operationId: listStudioJobs
+      tags: [deliverables]
+      summary: List local voice, image, and presenter jobs
+      responses:
+        "200":
+          description: Studio jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StudioJob"
+  /studio-jobs/{jobId}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    post:
+      operationId: cancelStudioJob
+      tags: [deliverables]
+      summary: Cancel a local studio job
+      responses:
+        "200":
+          description: Cancelled studio job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudioJob"
+  /studio-jobs/{jobId}/retry:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    post:
+      operationId: retryStudioJob
+      tags: [deliverables]
+      summary: Retry a failed or cancelled studio job
+      responses:
+        "202":
+          description: Studio job requeued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudioJob"
+  /studio-jobs/{jobId}/approve:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    post:
+      operationId: approveStudioJob
+      tags: [deliverables]
+      summary: Mark a reviewed presenter candidate as approved
+      responses:
+        "200":
+          description: Approved presenter job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudioJob"
+components:
+  parameters:
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema:
+        type: number
+    ModelId:
+      name: modelId
+      in: path
+      required: true
+      schema:
+        type: number
+    ProviderId:
+      name: providerId
+      in: path
+      required: true
+      schema:
+        type: number
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: number
+    CommandId:
+      name: commandId
+      in: path
+      required: true
+      schema:
+        type: string
+    InstallJobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Bridge authentication failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    StudioOverview:
+      type: object
+      properties:
+        activeProjects:
+          type: number
+        renderQueue:
+          type: number
+        installedModels:
+          type: number
+        readiness:
+          type: string
+          enum: [ready, attention, scanning, offline]
+        readinessLabel:
+          type: string
+        gpuMemory:
+          type: string
+        currentTask:
+          type: ["string", "null"]
+      required: [activeProjects, renderQueue, installedModels, readiness, readinessLabel, gpuMemory, currentTask]
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: number
+        kind:
+          type: string
+          enum: [project, model, render, system, provider]
+        title:
+          type: string
+        detail:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, kind, title, detail, createdAt]
+    Project:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [draft, planning, production, rendered, archived]
+        format:
+          type: string
+          enum: [landscape, portrait, square]
+        durationSeconds:
+          type: number
+        scenes:
+          type: number
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, description, status, format, durationSeconds, scenes, updatedAt]
+    ProjectInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        format:
+          type: string
+          enum: [landscape, portrait, square]
+      required: [name]
+    ProjectUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        format:
+          type: string
+          enum: [landscape, portrait, square]
+        status:
+          type: string
+          enum: [draft, planning, production, rendered, archived]
+    PlanInput:
+      type: object
+      properties:
+        script:
+          type: string
+          minLength: 1
+        language:
+          type: string
+          enum: [bn, en, mixed]
+        tone:
+          type: string
+          enum: [documentary, cinematic, educational, commercial, social]
+      required: [script, language, tone]
+    ProductionPlan:
+      type: object
+      properties:
+        projectId:
+          type: number
+        title:
+          type: string
+        summary:
+          type: string
+        sceneCount:
+          type: number
+        estimatedDurationSeconds:
+          type: number
+        scenes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScenePlan"
+      required: [projectId, title, summary, sceneCount, estimatedDurationSeconds, scenes]
+    ProjectPlanUpdate:
+      type: object
+      properties:
+        scenes:
+          type: array
+          minItems: 1
+          maxItems: 12
+          items:
+            $ref: "#/components/schemas/ScenePlan"
+      required: [scenes]
+    ScenePlan:
+      type: object
+      properties:
+        index:
+          type: number
+        title:
+          type: string
+        narration:
+          type: string
+        visualPrompt:
+          type: string
+        durationSeconds:
+          type: number
+        assetStatus:
+          type: string
+          enum: [pending, ready, needs-review]
+        subtitleStartSeconds:
+          type: number
+          minimum: 0
+        subtitleEndSeconds:
+          type: number
+          minimum: 0
+        delivery:
+          $ref: "#/components/schemas/SceneDelivery"
+      required: [index, title, narration, visualPrompt, durationSeconds, assetStatus, subtitleStartSeconds, subtitleEndSeconds, delivery]
+    SceneDelivery:
+      type: object
+      properties:
+        voiceProfileId:
+          type: ["number", "null"]
+        rate:
+          type: number
+          minimum: 0.5
+          maximum: 2
+        pitch:
+          type: number
+          minimum: -8
+          maximum: 8
+        pauseMs:
+          type: number
+          minimum: 0
+          maximum: 1000
+        pronunciation:
+          type: ["string", "null"]
+        presenterAssetId:
+          type: ["number", "null"]
+        presenterMode:
+          type: string
+          enum: [none, lipsync, scene]
+        presenterFraming:
+          type: string
+          enum: [close-up, waist-up, full-body]
+        presenterDeliveryMode:
+          type: string
+          enum: [conversational, presentational, energetic, calm]
+        subtitlesEnabled:
+          type: boolean
+      required: [voiceProfileId, rate, pitch, pauseMs, pronunciation, presenterAssetId, presenterMode, presenterFraming, presenterDeliveryMode, subtitlesEnabled]
+    ReadinessReport:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ready, attention, scanning, offline]
+        deviceName:
+          type: string
+        chip:
+          type: string
+        memory:
+          type: string
+        accelerator:
+          type: string
+        agent:
+          type: string
+        lastScanAt:
+          type: ["string", "null"]
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReadinessCheck"
+        bridgeConnected:
+          type: boolean
+        bridgeId:
+          type: ["string", "null"]
+        disk:
+          type: string
+        runtime:
+          type: string
+        metal:
+          type: string
+        mps:
+          type: string
+        mlx:
+          type: string
+        lastSeenAt:
+          type: ["string", "null"]
+        workerVersion:
+          type: ["string", "null"]
+        presenterReady:
+          type: boolean
+        presenterModel:
+          type: string
+        presenterBlockReason:
+          type: ["string", "null"]
+        imageReady:
+          type: boolean
+        imageModel:
+          type: string
+        imageBlockReason:
+          type: ["string", "null"]
+      required: [status, deviceName, chip, memory, accelerator, agent, lastScanAt, checks, bridgeConnected, bridgeId, disk, runtime, metal, mps, mlx, lastSeenAt, workerVersion, presenterReady, presenterModel, presenterBlockReason, imageReady, imageModel, imageBlockReason]
+    ReadinessCheck:
+      type: object
+      properties:
+        name:
+          type: string
+        detail:
+          type: string
+        status:
+          type: string
+          enum: [pass, warning, action]
+      required: [name, detail, status]
+    BridgePairing:
+      type: object
+      properties:
+        pairingCode:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+      required: [pairingCode, expiresAt]
+    BridgeHandshake:
+      type: object
+      properties:
+        workerId:
+          type: string
+          minLength: 1
+        pairingCode:
+          type: string
+        nonce:
+          type: string
+          minLength: 16
+        signature:
+          type: string
+          minLength: 64
+        protocolVersion:
+          type: string
+        workerVersion:
+          type: string
+        deviceName:
+          type: string
+        chip:
+          type: string
+        memoryGb:
+          type: number
+        metal:
+          type: boolean
+        mps:
+          type: boolean
+        mlx:
+          type: boolean
+        diskFreeGb:
+          type: number
+        diskTotalGb:
+          type: number
+        runtime:
+          type: string
+        permissions:
+          type: object
+          additionalProperties:
+            type: boolean
+        presenterPipeline:
+          type: boolean
+        presenterModel:
+          type: string
+        imagePipeline:
+          type: boolean
+        imageModel:
+          type: string
+      required: [workerId, nonce, signature, protocolVersion, workerVersion, deviceName, chip, memoryGb, metal, mps, mlx, diskFreeGb, diskTotalGb, runtime, permissions]
+    BridgeHeartbeat:
+      type: object
+      properties:
+        workerId:
+          type: string
+          minLength: 1
+        nonce:
+          type: string
+          minLength: 16
+        signature:
+          type: string
+          minLength: 64
+      required: [workerId, nonce, signature]
+    BridgeCommand:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          enum: [install-model, store-huggingface-credential, generate-presenter, generate-image]
+        jobId:
+          type: ["string", "null"]
+        modelId:
+          type: ["number", "null"]
+        modelName:
+          type: ["string", "null"]
+        providerId:
+          type: ["number", "null"]
+        requestId:
+          type: ["string", "null"]
+        studioJobId:
+          type: ["number", "null"]
+        sourceFile:
+          type: ["string", "null"]
+        audioFile:
+          type: ["string", "null"]
+        script:
+          type: ["string", "null"]
+        presenterMode:
+          type: ["string", "null"]
+        framing:
+          type: ["string", "null"]
+        deliveryMode:
+          type: ["string", "null"]
+        durationSeconds:
+          type: ["number", "null"]
+        referenceSha256:
+          type: ["string", "null"]
+        audioSha256:
+          type: ["string", "null"]
+        prompt:
+          type: ["string", "null"]
+        negativePrompt:
+          type: ["string", "null"]
+        width:
+          type: ["number", "null"]
+        height:
+          type: ["number", "null"]
+        steps:
+          type: ["number", "null"]
+        guidance:
+          type: ["number", "null"]
+        seed:
+          type: ["number", "null"]
+      required: [id, kind, jobId, modelId, modelName, providerId, requestId, studioJobId, sourceFile, audioFile, script, presenterMode, framing, deliveryMode, durationSeconds, referenceSha256, audioSha256]
+    InstallJob:
+      type: object
+      properties:
+        id:
+          type: string
+        modelId:
+          type: number
+        modelName:
+          type: string
+        status:
+          type: string
+          enum: [pending-approval, approved, queued, downloading, installing, complete, failed]
+        progress:
+          type: number
+        logs:
+          type: array
+          items:
+            type: string
+        error:
+          type: ["string", "null"]
+        canRetry:
+          type: boolean
+        requestedAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, modelId, modelName, status, progress, logs, error, canRetry, requestedAt, updatedAt]
+    InstallEvent:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [queued, downloading, installing, complete, failed]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        message:
+          type: string
+          maxLength: 1000
+        error:
+          type: string
+      required: [status, progress, message]
+    CredentialRequest:
+      type: object
+      properties:
+        requestId:
+          type: string
+        providerId:
+          type: number
+        status:
+          type: string
+          enum: [pending, stored, failed]
+        detail:
+          type: string
+      required: [requestId, providerId, status, detail]
+    CredentialStoredEvent:
+      type: object
+      properties:
+        requestId:
+          type: string
+        providerId:
+          type: number
+        stored:
+          type: boolean
+        detail:
+          type: string
+      required: [requestId, providerId, stored, detail]
+    Model:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        provider:
+          type: string
+        purpose:
+          type: string
+        runtime:
+          type: string
+        status:
+          type: string
+          enum: [installed, available, installing, attention]
+        size:
+          type: string
+        recommended:
+          type: boolean
+      required: [id, name, provider, purpose, runtime, status, size, recommended]
+    Provider:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        kind:
+          type: string
+          enum: [local, huggingface, openai-compatible]
+        status:
+          type: string
+          enum: [connected, not-configured, error]
+        detail:
+          type: string
+        tokenConfigured:
+          type: boolean
+        credentialStorage:
+          type: string
+          enum: [macos-keychain, none]
+      required: [id, name, kind, status, detail, tokenConfigured, credentialStorage]
+    ProviderUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [connected, not-configured, error]
+        detail:
+          type: string
+        tokenConfigured:
+          type: boolean
+      required: [status, tokenConfigured]
+    RenderJob:
+      type: object
+      properties:
+        id:
+          type: number
+        projectId:
+          type: number
+        projectName:
+          type: string
+        preset:
+          type: string
+          enum: [preview, youtube, shorts, reels, master]
+        status:
+          type: string
+          enum: [queued, rendering, complete, failed, cancelled]
+        progress:
+          type: number
+        eta:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        outputPath:
+          type: ["string", "null"]
+        subtitlePath:
+          type: ["string", "null"]
+        error:
+          type: ["string", "null"]
+        startedAt:
+          type: ["string", "null"]
+          format: date-time
+        completedAt:
+          type: ["string", "null"]
+          format: date-time
+      required: [id, projectId, projectName, preset, status, progress, eta, outputPath, subtitlePath, error, startedAt, completedAt, createdAt]
+    RenderJobInput:
+      type: object
+      properties:
+        projectId:
+          type: number
+        preset:
+          type: string
+          enum: [preview, youtube, shorts, reels, master]
+      required: [projectId, preset]
+    StudioAsset:
+      type: object
+      properties:
+        id:
+          type: number
+        kind:
+          type: string
+          enum: [voice-profile, presenter-reference]
+        name:
+          type: string
+        mimeType:
+          type: string
+        sizeBytes:
+          type: number
+        consentGranted:
+          type: boolean
+        consentSubject:
+          type: ["string", "null"]
+        fileUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, kind, name, mimeType, sizeBytes, consentGranted, consentSubject, fileUrl, createdAt]
+    StudioAssetInput:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum: [voice-profile, presenter-reference]
+        name:
+          type: string
+        mimeType:
+          type: string
+        data:
+          type: string
+          description: Base64 encoded local asset bytes
+        consentGranted:
+          type: boolean
+        consentSubject:
+          type: string
+        referenceType:
+          type: string
+          enum: [real-human]
+      required: [kind, name, mimeType, data, consentGranted, consentSubject]
+    StudioJob:
+      type: object
+      properties:
+        id:
+          type: number
+        kind:
+          type: string
+          enum: [voice, image, presenter-lipsync, presenter-scene]
+        projectId:
+          type: ["number", "null"]
+        assetId:
+          type: ["number", "null"]
+        status:
+          type: string
+          enum: [queued, rendering, review, complete, failed, cancelled]
+        progress:
+          type: number
+        eta:
+          type: ["string", "null"]
+        outputPath:
+          type: ["string", "null"]
+        error:
+          type: ["string", "null"]
+        requirements:
+          type: object
+          additionalProperties: true
+        outputMetadata:
+          type: ["object", "null"]
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, kind, projectId, assetId, status, progress, eta, outputPath, error, requirements, outputMetadata, createdAt, updatedAt]
+    VoiceJobInput:
+      type: object
+      properties:
+        text:
+          type: string
+        voiceProfileId:
+          type: ["number", "null"]
+        pronunciation:
+          type: ["string", "null"]
+        rate:
+          type: number
+          minimum: 0.5
+          maximum: 2
+        pitch:
+          type: number
+          minimum: -8
+          maximum: 8
+        pauseMs:
+          type: number
+          minimum: 0
+          maximum: 1000
+      required: [text, rate, pitch, pauseMs]
+    ImageJobInput:
+      type: object
+      properties:
+        prompt:
+          type: string
+          minLength: 3
+          maxLength: 4000
+        negativePrompt:
+          type: string
+          maxLength: 2000
+        width:
+          type: number
+          minimum: 512
+          maximum: 2048
+        height:
+          type: number
+          minimum: 512
+          maximum: 2048
+        steps:
+          type: number
+          minimum: 1
+          maximum: 50
+        guidance:
+          type: number
+          minimum: 0
+          maximum: 20
+        seed:
+          type: number
+          minimum: 0
+          maximum: 2147483647
+      required: [prompt, width, height, steps, guidance, seed]
+    LiveCallMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+          minLength: 1
+          maxLength: 4000
+      required: [role, content]
+    LiveCallTurnInput:
+      type: object
+      properties:
+        transcript:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        language:
+          type: string
+          enum: [en, bn, mixed]
+        history:
+          type: array
+          maxItems: 20
+          items:
+            $ref: "#/components/schemas/LiveCallMessage"
+      required: [transcript, language, history]
+    LiveCallTurn:
+      type: object
+      properties:
+        text:
+          type: string
+        model:
+          type: string
+        latencyMs:
+          type: number
+      required: [text, model, latencyMs]
+    PresenterJobInput:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum: [presenter-lipsync, presenter-scene]
+        assetId:
+          type: number
+        projectId:
+          type: ["number", "null"]
+        script:
+          type: string
+        voiceJobId:
+          type: ["number", "null"]
+        framing:
+          type: string
+          enum: [close-up, waist-up, full-body]
+        deliveryMode:
+          type: string
+          enum: [conversational, presentational, energetic, calm]
+        durationSeconds:
+          type: number
+          minimum: 1
+          maximum: 120
+      required: [kind, assetId, script]
+    PresenterJobEvent:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [queued, generating, uploading, complete, failed]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        message:
+          type: string
+          maxLength: 1000
+        error:
+          type: string
+      required: [status, progress, message]
+    PresenterOutput:
+      type: object
+      properties:
+        data:
+          type: string
+          description: Base64 encoded generated MP4 bytes
+        mimeType:
+          type: string
+          enum: [video/mp4]
+        metadata:
+          type: object
+          additionalProperties: true
+      required: [data, mimeType, metadata]
+    ImageOutput:
+      type: object
+      properties:
+        data:
+          type: string
+          description: Base64 encoded generated PNG bytes
+        mimeType:
+          type: string
+          enum: [image/png]
+        metadata:
+          type: object
+          additionalProperties: true
+      required: [data, mimeType, metadata]

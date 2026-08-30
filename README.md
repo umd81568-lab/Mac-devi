@@ -1,4 +1,162 @@
-# 🎬🎙️ BhashaMedia AI — বাংলা মাল্টি-মোডাল লোকাল এজেন্ট
+# BhashaMedia AI + Professional Local AI Studio
+
+This repository now provides two complementary, local-first applications for
+Apple Silicon Macs:
+
+- **BhashaMedia toolbox** at `http://127.0.0.1:7860`: the existing standalone
+  Gradio application with all 10 media facilities.
+- **Professional Studio** at `http://127.0.0.1:5173`: the TypeScript production
+  control plane for projects, scripts, assets, generation jobs, render queues,
+  signed Mac-worker readiness, and local voice rooms.
+
+The original Gradio application remains independently runnable through
+`setup_mac.sh` and `run_mac.sh`. The new master scripts operate both applications
+as one stack without replacing any facility.
+
+The `studio/` workspace was integrated from
+`umd81568-lab/replitallpro@eee4c34`, excluding Replit deployment metadata,
+transient build state, dependencies, and archives.
+
+## Single operator entrypoint
+
+```bash
+./setup_master.sh  # one-time runtimes, dependencies, PostgreSQL, schema, build
+./run_master.sh    # starts Gradio, Studio API, and Studio UI
+```
+
+`setup_master.sh` requires Apple Silicon and Homebrew. It installs only missing
+Node.js, pnpm/Corepack, PostgreSQL 16, ffmpeg, and Python 3.11 prerequisites. It
+creates the idempotent `local_ai_studio` database, writes local settings to
+`.env.local`, installs both dependency sets, applies the Drizzle schema, and
+builds the Studio. It deliberately does **not** download model weights.
+
+Press Ctrl-C once to stop all three child processes. The runner tracks and
+terminates only the PIDs it started; it never kills processes by name.
+
+## Complete operator surface
+
+The BhashaMedia UI retains:
+
+1. Speech-to-text and Bangla SRT
+2. Edge TTS with five Bangla voices
+3. XTTS-v2 offline voice cloning
+4. Audio editing
+5. Video-to-Bangla-SRT
+6. Video editing
+7. Image slideshow creation
+8. Script-to-Bangla-video
+9. SadTalker talking avatars
+10. Local Ollama/llama.cpp agent and turn-based voice calls
+
+The Professional Studio adds local FLUX.1-schnell image generation with output
+provenance checks, LongCat-Video-Avatar 1.5 realistic presenters, consented asset
+management, project/script/scene planning, recoverable generation and render
+queues, and a private live Ollama voice room. Image and presenter jobs require
+the paired, nonce-signed Mac worker; missing runtimes block readiness instead of
+producing placeholder output.
+
+Studio's built-in voice jobs currently use the local macOS `say` voice as a
+baseline and do not apply the profile controls shown in the voice workspace.
+Use BhashaMedia Tab 3 for real XTTS-v2 voice cloning; selecting a Studio voice
+profile must not be interpreted as cloning or changing the macOS system voice.
+
+## M1 Pro 64 GB model profile and disk planning
+
+| Capability | Recommended choice | Approximate free disk |
+|---|---|---:|
+| Studio images | FLUX.1-schnell 8-bit through mflux 0.19.1 | 15 GB |
+| Studio presenter | LongCat 1.5 bf16 DMD-merged (64 GB only) | 55 GB |
+| Studio presenter, smaller Macs | LongCat 1.5 q4 DMD-merged | 30 GB |
+| Live Studio room | Ollama `qwen2.5:14b` | 10 GB |
+| Existing Gradio optional models | Whisper, XTTS, SadTalker, Llama 3.1 GGUF | 14 GB |
+
+Allow at least **95 GB free** for the recommended 64 GB profile plus application
+dependencies and generated media. Install heavy components only when needed:
+
+```bash
+# FLUX/MLX images (~15 GB)
+bash studio/tools/mac-worker/install_image.sh
+
+# LongCat presenter: recommended on M1 Pro with 64 GB (~55 GB)
+bash studio/tools/mac-worker/install_presenter.sh --bf16
+
+# Safer presenter choice for 32 GB systems (~30 GB)
+bash studio/tools/mac-worker/install_presenter.sh --variant q4
+
+# Installer/runtime checks without model weights
+bash studio/tools/mac-worker/install_image.sh --no-model
+bash studio/tools/mac-worker/install_presenter.sh --variant bf16 --no-model
+
+# Local live voice room
+brew install ollama
+ollama pull qwen2.5:14b
+ollama serve
+```
+
+Build and sign the native worker after installing the selected runtime:
+
+```bash
+cd studio/tools/mac-worker
+swiftc -O -o StudioWorker StudioWorker.swift \
+  -framework Metal -framework Security -framework CryptoKit
+codesign --force --options runtime \
+  --sign "Developer ID Application: YOUR TEAM" StudioWorker
+./StudioWorker --studio-url http://127.0.0.1:5000/api \
+  --pairing-code ONE_TIME_CODE_FROM_STUDIO
+```
+
+## Environment
+
+`setup_master.sh` creates `.env.local` with safe local defaults. Override these
+before running setup, or edit the local file afterward:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `DATABASE_URL` | `postgresql:///local_ai_studio` | Dedicated Studio database |
+| `STUDIO_DB_NAME` | `local_ai_studio` | Database created during setup |
+| `STUDIO_API_PORT` | `5000` | Studio API |
+| `STUDIO_UI_PORT` | `5173` | Studio operator UI |
+| `GRADIO_SERVER_NAME` | `127.0.0.1` | BhashaMedia bind address |
+| `GRADIO_SERVER_PORT` | `7860` | BhashaMedia UI |
+| `STUDIO_OUTPUT_DIR` | `studio/artifacts/api-server/data/studio` | Generated Studio files |
+| `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | Local Ollama endpoint |
+| `OLLAMA_MODEL` | `qwen2.5:14b` | Live room model |
+
+## Consent and licensing
+
+Only upload presenter references and voice samples for people who have given
+explicit permission. Studio records consent metadata and verifies immutable
+reference/audio hashes and generated output hashes, but the operator remains
+responsible for lawful collection, disclosure, and use. Do not impersonate
+people or create deceptive media.
+
+Review the FLUX.1-schnell, LongCat-Video-Avatar, model-host, Coqui CPML, Meta
+Llama, Microsoft Edge TTS, ffmpeg codec, and any deployment-specific licenses
+before commercial use. Model access terms can differ from this repository's MIT
+code license.
+
+## Recovery
+
+- **A port is occupied:** stop the owning application or change the matching
+  port in `.env.local`; `run_master.sh` refuses a partial startup.
+- **PostgreSQL is unavailable:** run `brew services start postgresql@16`, then
+  `pg_isready`. Rerun `./setup_master.sh` to recreate only missing state and
+  reapply the schema.
+- **Studio build/schema is stale:** rerun `./setup_master.sh`; database creation,
+  dependency installation, and schema application are idempotent.
+- **Worker shows offline:** generate a fresh pairing code in Studio, start the
+  signed worker with that one-time code, and verify its URL ends in `/api`.
+- **Image/presenter readiness is blocked:** run the relevant pipeline `--check`
+  command shown in [`studio/tools/mac-worker/README.md`](studio/tools/mac-worker/README.md).
+  A missing or mismatched model revision intentionally stays unavailable.
+- **Ollama voice room fails:** confirm `curl http://127.0.0.1:11434/api/tags`
+  succeeds and that `OLLAMA_MODEL` has been pulled.
+- **Gradio-only recovery:** the original `./setup_mac.sh` and `./run_mac.sh`
+  remain supported and do not depend on Studio or PostgreSQL.
+
+---
+
+## BhashaMedia reference
 
 **Standalone, fully local, all-in-one Bangla media agent for your Mac.**
 STT · Edge-TTS (BN 5 voices) · XTTS-v2 Bangla Voice Clone · Audio Editor · Video → SRT ·
