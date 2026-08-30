@@ -429,10 +429,7 @@ def image_to_avatar(image_path, audio_path, script_text, voice_label):
 def _ollama_chat(message, history, model):
     import requests
 
-    messages = []
-    for u, a in history or []:
-        messages.append({"role": "user", "content": u})
-        messages.append({"role": "assistant", "content": a})
+    messages = list(history or [])
     messages.append({"role": "user", "content": message})
     try:
         resp = requests.post(
@@ -463,7 +460,11 @@ def _llama_cpp_chat(message, history):
             model_path=gguf_candidates[0], n_ctx=4096, n_gpu_layers=-1, verbose=False
         )
     llm = _llama_cpp_cache["model"]
-    prompt = "".join(f"User: {u}\nAssistant: {a}\n" for u, a in (history or []))
+    labels = {"user": "User", "assistant": "Assistant"}
+    prompt = "".join(
+        f"{labels.get(item.get('role'), 'User')}: {item.get('content', '')}\n"
+        for item in (history or [])
+    )
     prompt += f"User: {message}\nAssistant:"
     try:
         out = llm(prompt, max_tokens=512, stop=["User:"])
@@ -488,7 +489,10 @@ def agent_chat(message, history, backend, model_name):
             "2) Advanced: pip install llama-cpp-python and place a .gguf model under "
             "app/models/llama3_1/, then switch backend to 'llama.cpp (local .gguf file)'."
         )
-    history = (history or []) + [(message, reply)]
+    history = (history or []) + [
+        {"role": "user", "content": message},
+        {"role": "assistant", "content": reply},
+    ]
     return history, ""
 
 
@@ -497,7 +501,7 @@ def voice_call_turn(audio_path, history, agent_backend, model_name, voice_label)
         return history, None, "অডিও দিন (record or upload audio)."
     text, _, _ = stt_transcribe(audio_path, "large-v3", "Bangla (বাংলা)", 5)
     history, _ = agent_chat(text, history, agent_backend, model_name)
-    reply_text = history[-1][1] if history else ""
+    reply_text = history[-1]["content"] if history else ""
     reply_audio, msg = edge_tts_speak(reply_text, voice_label, 0, 0)
     return history, reply_audio, f"You said: {text}\n{msg}"
 
@@ -656,7 +660,7 @@ def build_app():
                 value="Ollama (recommended, easiest local agent)", label="Agent backend",
             )
             model10 = gr.Textbox(value="llama3.1", label="Ollama model name")
-            chat10 = gr.Chatbot(label="Chat")
+            chat10 = gr.Chatbot(label="Chat", type="messages", allow_tags=False)
             msg10 = gr.Textbox(label="Message")
             btn10 = gr.Button("Send", variant="primary")
             btn10.click(agent_chat, [msg10, chat10, backend10, model10], [chat10, msg10])
