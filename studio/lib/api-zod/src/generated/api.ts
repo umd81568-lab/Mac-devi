@@ -1271,4 +1271,3 @@ export const ApproveStudioJobResponse = zod.object({
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })
-

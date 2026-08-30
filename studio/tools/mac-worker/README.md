@@ -42,7 +42,7 @@ bash install_presenter.sh
    manifest. Use `bash install_presenter.sh --no-model` to install dependencies
    and write the selection without downloading weights; the worker stays
    blocked until those exact weights are present.
-   
+
    Install the MLX-native image runtime separately:
 
 ```sh
