@@ -519,7 +519,7 @@ def local_diagnostics():
         f"Architecture: {platform.machine()}",
         f"Python: {platform.python_version()}",
         f"ffmpeg: {command_output(['ffmpeg', '-version']).splitlines()[0] if _ffmpeg_ok() else 'Not installed'}",
-        f"Virtual environment: {'Ready' if os.path.isfile(os.path.join(BASE_DIR, '..', 'venv', 'bin', 'python')) else 'Missing — run ./setup_mac.sh'}",
+        f"Virtual environment: {'Ready' if os.access(os.path.join(BASE_DIR, '..', 'venv', 'bin', 'python'), os.X_OK) else 'Missing — run ./setup_mac.sh'}",
         f"Whisper large-v3: {'Downloaded' if os.path.isdir(os.path.join(MODELS_DIR, 'whisper-large-v3')) else 'Not downloaded'}",
         f"XTTS-v2: {'Downloaded' if os.path.isdir(os.path.join(MODELS_DIR, 'xtts_v2')) else 'Not downloaded'}",
         f"SadTalker source: {'Ready' if os.path.isfile(os.path.join(MODELS_DIR, 'sadtalker_src', 'inference.py')) else 'Not installed'}",

@@ -24,7 +24,7 @@ the models below once, then keep the app on its default `127.0.0.1` address:
 ```bash
 ./setup_mac.sh
 source venv/bin/activate
-pip install TTS==0.22.0 huggingface_hub>=0.24
+python -m pip install TTS==0.22.0 "huggingface_hub>=0.24"
 python app/download_models.py --model whisper
 python app/download_models.py --model xtts
 python app/download_models.py --model sadtalker
