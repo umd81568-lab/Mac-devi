@@ -1,9 +1,0 @@
-{
-  "version": "7.0",
-  "title": "BhashaMedia AI",
-  "description": "বাংলা ভিডিও · অডিও · ভয়েস ক্লোন · স্ক্রিপ্ট→ভিডিও · ইমেজ→অ্যাভাটার · লাইভ কল — ১০ ফ্যাসিলিটি — STT · Edge-TTS · XTTS · AudioEdit · Video→SRT · VideoEdit · Slideshow · ScriptVideo · TalkingAvatar · LiveCall — 100% Local (Apple Silicon)",
-  "icon": "icon.png",
-  "platform": ["darwin"],
-  "arch": ["arm64"],
-  "tags": ["bangla", "whisper", "xtts", "edge-tts", "sadtalker", "llamacpp", "video", "audio", "pinokio", "livecall"]
-}

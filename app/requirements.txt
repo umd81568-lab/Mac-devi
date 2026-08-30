@@ -1,0 +1,39 @@
+# BhashaMedia AI — core runtime dependencies (Apple Silicon / Intel Mac, Python 3.11)
+# Install with: pip install -r requirements.txt
+# Heavy/optional facilities (XTTS voice clone, SadTalker avatar, local LLM agent) are
+# imported lazily by app.py — the app boots and the other tabs work even if any one
+# of these optional extras below is not installed.
+
+# --- UI / core ---
+gradio==5.50.0
+numpy==1.26.4
+scipy==1.14.1
+Pillow==10.4.0
+pydantic>=2.7
+
+# --- Speech to Text (Tab 1 / 5) ---
+faster-whisper==1.0.3
+
+# --- Online TTS (Tab 2, optional cloud fallback only) ---
+edge-tts>=7.2.8
+
+# --- Audio editing (Tab 4) ---
+pydub==0.25.1
+soundfile==0.12.1
+librosa==0.10.2.post1
+sounddevice==0.5.0
+
+# --- Video editing / slideshow / script-to-video (Tab 6 / 7 / 8) ---
+moviepy==2.1.1
+opencv-python==4.10.0.84
+
+# --- Local text agent (Tab 10) — thin client only, no server required ---
+requests>=2.31
+
+# NOTE: ffmpeg is a system binary, not a pip package.
+# Install once with Homebrew:  brew install ffmpeg
+
+# --- Optional extras (install manually only if you want these facilities) ---
+# TTS==0.22.0                 # Coqui XTTS-v2 offline voice cloning (Tab 3)
+# llama-cpp-python==0.3.35    # local open-source LLM agent brain (Tab 10), or use Ollama instead
+# huggingface_hub>=0.24       # model downloads via app/download_models.py
