@@ -17,6 +17,29 @@ discrete GPU, (3) good Bangla-language quality where relevant.
 | Local open-source LLM agent | **Ollama + Llama 3.1 8B Instruct** (recommended, no build step) | Meta Llama 3.1 Community License | `brew install ollama && ollama pull llama3.1 && ollama serve` |
 | Local agent (advanced/offline binary) | `llama-cpp-python` + `Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf` | Meta Llama 3.1 Community License | `pip install llama-cpp-python` then `python app/download_models.py --model llama` |
 
+## Apple M1 Max (64 GB) local quality profile
+Your Mac has sufficient unified memory for the complete local workflow. Install
+the models below once, then keep the app on its default `127.0.0.1` address:
+
+```bash
+./setup_mac.sh
+source venv/bin/activate
+pip install TTS==0.22.0 huggingface_hub>=0.24
+python app/download_models.py --model whisper
+python app/download_models.py --model xtts
+python app/download_models.py --model sadtalker
+brew install ollama
+ollama pull llama3.1
+```
+
+For the best fully local talking-video result, create narration with **Tab ③
+XTTS-v2 Voice Clone** from a consented 6–30 second voice sample, then pass that
+WAV and a consented, centred portrait to **Tab ⑨ Image → Talking Avatar**. The
+Tab ⑨ script box uses Edge TTS and is therefore not part of the fully local
+workflow. SadTalker additionally needs its inference source installed at
+`app/models/sadtalker_src/`; follow its upstream installation instructions
+after downloading its Hugging Face model files.
+
 ## My recommendation
 - **Start with Ollama** for the local agent (Tab ⑩). It is the simplest, most
   reliable "open model agent" option on a Mac: one `brew install`, one `ollama pull`,

@@ -13,6 +13,7 @@ import asyncio
 import glob
 import json
 import os
+import platform
 import shutil
 import subprocess
 import tempfile
@@ -501,8 +502,38 @@ def voice_call_turn(audio_path, history, agent_backend, model_name, voice_label)
     return history, reply_audio, f"You said: {text}\n{msg}"
 
 
+def local_diagnostics():
+    """Report local prerequisites without modifying the Mac or application files."""
+    def command_output(command):
+        try:
+            result = subprocess.run(
+                command, capture_output=True, text=True, timeout=10, check=False
+            )
+            return result.stdout.strip() if result.returncode == 0 else "Not available"
+        except (OSError, subprocess.TimeoutExpired):
+            return "Not available"
+
+    lines = [
+        "Read-only local diagnostic report (no settings or files were changed).",
+        f"macOS: {command_output(['sw_vers', '-productVersion'])}",
+        f"Architecture: {platform.machine()}",
+        f"Python: {platform.python_version()}",
+        f"ffmpeg: {command_output(['ffmpeg', '-version']).splitlines()[0] if _ffmpeg_ok() else 'Not installed'}",
+        f"Virtual environment: {'Ready' if os.path.isfile(os.path.join(BASE_DIR, '..', 'venv', 'bin', 'python')) else 'Missing — run ./setup_mac.sh'}",
+        f"Whisper large-v3: {'Downloaded' if os.path.isdir(os.path.join(MODELS_DIR, 'whisper-large-v3')) else 'Not downloaded'}",
+        f"XTTS-v2: {'Downloaded' if os.path.isdir(os.path.join(MODELS_DIR, 'xtts_v2')) else 'Not downloaded'}",
+        f"SadTalker source: {'Ready' if os.path.isfile(os.path.join(MODELS_DIR, 'sadtalker_src', 'inference.py')) else 'Not installed'}",
+        f"Ollama: {command_output(['ollama', '--version'])}",
+    ]
+    if platform.system() == "Darwin":
+        memory_bytes = command_output(["sysctl", "-n", "hw.memsize"])
+        if memory_bytes.isdigit():
+            lines.insert(3, f"Memory: {int(memory_bytes) / (1024 ** 3):.0f} GB")
+    return "\n".join(lines)
+
+
 # ---------------------------------------------------------------------------
-# Gradio Blocks UI — exact 10-tab order preserved
+# Gradio Blocks UI
 # ---------------------------------------------------------------------------
 def build_app():
     with gr.Blocks(title="BhashaMedia AI — Local Mac Agent") as demo:
@@ -639,6 +670,15 @@ def build_app():
             call_status = gr.Textbox(label="Turn status")
             btn10b.click(voice_call_turn, [call_audio, chat10, backend10, model10, voice10],
                          [chat10, reply_audio10, call_status])
+
+        with gr.Tab("⑪ Mac & App Diagnostics (read-only)"):
+            gr.Markdown(
+                "Checks local app prerequisites and installed models only. "
+                "It does not change your Mac, files, or settings."
+            )
+            diagnostics_out = gr.Textbox(label="Diagnostic report", lines=12)
+            diagnostics_btn = gr.Button("Run Read-only Check", variant="primary")
+            diagnostics_btn.click(local_diagnostics, outputs=diagnostics_out)
 
     return demo
 

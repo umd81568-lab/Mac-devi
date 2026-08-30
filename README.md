@@ -68,6 +68,23 @@ Open the printed URL in your browser — that's it, no other app to install.
   GRADIO_SERVER_PORT=7861 ./run_mac.sh
   ```
 
+### High-quality, fully local photo + voice + script video (Apple M1 Max)
+For a consented portrait and voice, use the M1 Max/64 GB capacity for the local
+models rather than the online Edge TTS path:
+
+1. Install the local models listed in [MODELS.md](MODELS.md): Whisper Large-v3,
+   XTTS-v2, SadTalker, and an Ollama model.
+2. In **Tab ③**, upload a clean 6–30 second sample of the speaker's own voice
+   and enter the Bangla script. Download the resulting local XTTS WAV.
+3. In **Tab ⑨**, upload a single, centred portrait belonging to that speaker and
+   use the XTTS WAV as **Driving audio**. This generates the talking video
+   locally; do not use the script field there because it uses online Edge TTS.
+4. Use **Tab ⑥** to add local subtitles, music, and trims. Use **Tab ⑪** to
+   diagnose missing local prerequisites without modifying your Mac.
+
+Use only images and voices you own or have permission to use. The app binds to
+`127.0.0.1` by default, so media remains on your Mac during this local workflow.
+
 ### Enable optional facilities
 The app starts immediately with STT, Edge TTS, audio editing, video editing,
 slideshow, and script-to-video all working out of the box (pure Python + ffmpeg).
