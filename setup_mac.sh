@@ -9,7 +9,7 @@ if ! command -v python3 >/dev/null 2>&1; then
   echo "python3 not found. Install it first: brew install python@3.11" >&2
   exit 1
 fi
-if ! python3 -c 'import sys; raise SystemExit(sys.version_info < (3, 11))'; then
+if ! python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)'; then
   echo "Python 3.11 or newer is required. Install it with: brew install python@3.11" >&2
   exit 1
 fi
