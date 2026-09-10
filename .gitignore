@@ -4,3 +4,12 @@ __pycache__/
 app/models/
 app/outputs/
 .DS_Store
+
+# Professional Studio local state
+.env.local
+studio/**/node_modules/
+studio/**/dist/
+studio/**/*.tsbuildinfo
+studio/**/.cache/
+studio/**/coverage/
+studio/artifacts/api-server/data/studio/
