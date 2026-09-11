@@ -78,7 +78,7 @@ def _get_whisper(model_size):
                        "  pip install faster-whisper\n"
                        "then retry.")
     local_dir = os.path.join(MODELS_DIR, "whisper-large-v3")
-    source = local_dir if os.path.isdir(local_dir) else model_size
+    source = local_dir if model_size == "large-v3" and os.path.isdir(local_dir) else model_size
     try:
         model = WhisperModel(source, device="auto", compute_type="int8")
     except Exception as exc:  # pragma: no cover - environment dependent
