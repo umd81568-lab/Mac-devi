@@ -1,0 +1,36 @@
+name: Copilot Setup Steps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+      - .github/copilot/settings.json
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+      - .github/copilot/settings.json
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Configure Copilot subagent defaults
+        shell: bash
+        run: |
+          mkdir -p "$HOME/.copilot"
+          cat > "$HOME/.copilot/settings.json" <<'JSON'
+          {
+            "subagents": {
+              "agents": {
+                "task": {
+                  "model": "inherit",
+                  "effortLevel": "inherit",
+                  "contextTier": "inherit"
+                }
+              }
+            }
+          }
+          JSON
