@@ -62,6 +62,7 @@ python app/download_models.py --model xtts
 
 # Talking avatar (Tab 9)
 python app/download_models.py --model sadtalker
+pip install -e app/models/sadtalker_src --no-deps
 
 # Local chat/voice agent (Tab 10) — recommended path, no extra pip package:
 brew install ollama
@@ -129,6 +130,12 @@ you moved/renamed your Homebrew install.
 ### Tab ③ / ⑨ / ⑩ say a model is missing
 These are optional facilities by design (they need multi-GB downloads). Run the
 one-line command shown in the tab's status box, or see [MODELS.md](MODELS.md).
+
+For SadTalker specifically, the one-time setup is two commands:
+```bash
+python app/download_models.py --model sadtalker
+pip install -e app/models/sadtalker_src --no-deps
+```
 
 ### Tab ⑩ agent says "Local agent unavailable"
 - Recommended fix: `brew install ollama && ollama pull llama3.1 && ollama serve`,

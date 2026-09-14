@@ -401,12 +401,21 @@ def image_to_avatar(image_path, audio_path, script_text, voice_label):
         return None, "অডিও দিন বা স্ক্রিপ্ট লিখুন (provide audio or a script)."
     audio_path = _safe_path(audio_path)
 
-    sadtalker_dir = os.path.join(MODELS_DIR, "sadtalker_src")
+    sadtalker_dirs = [
+        os.path.join(MODELS_DIR, "sadtalker_src"),
+        os.path.join(MODELS_DIR, "sadtalker"),
+    ]
+    sadtalker_dir = next(
+        (candidate for candidate in sadtalker_dirs if os.path.exists(os.path.join(candidate, "inference.py"))),
+        sadtalker_dirs[0],
+    )
     inference_py = os.path.join(sadtalker_dir, "inference.py")
     if not os.path.exists(inference_py):
         return None, (
             "SadTalker is not installed/downloaded. This is an optional facility.\n"
-            "See MODELS.md → 'Image to Talking Avatar' for the one-time setup command."
+            "Run `python app/download_models.py --model sadtalker` once, then "
+            "`pip install -e app/models/sadtalker_src --no-deps`.\n"
+            "See MODELS.md → 'Image to Talking Avatar' for details."
         )
     out_dir = tempfile.mkdtemp(prefix="avatar_", dir=OUTPUTS_DIR)
     cmd = [

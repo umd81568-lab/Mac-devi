@@ -34,7 +34,7 @@ CATALOG = {
     },
     "sadtalker": {
         "repo": "vinthony/SadTalker",
-        "dest": "sadtalker",
+        "dest": "sadtalker_src",
         "size": "~3.5 GB",
         "used_by": "Tab 9 (Image -> Talking Avatar)",
     },
@@ -63,6 +63,8 @@ def download(name):
         kwargs["allow_patterns"] = entry["allow_patterns"]
     snapshot_download(entry["repo"], **kwargs)
     print("Done.")
+    if name == "sadtalker":
+        print("Next: pip install -e app/models/sadtalker_src --no-deps")
 
 
 def main():
