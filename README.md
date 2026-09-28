@@ -22,7 +22,7 @@ Local Open-Source LLM Agent + Live BN Voice Call.
 | ⑤ | **Video → BN SRT** | faster-whisper + ffmpeg | ✅ OFFLINE | `.srt` + optional burned-in preview |
 | ⑥ | **Video Editor** | ffmpeg | ✅ OFFLINE | Trim / Merge / Burn subs / Add BGM MP4 |
 | ⑦ | **Slideshow (Images → MP4)** | ffmpeg concat demuxer | ✅ OFFLINE | h264 MP4 |
-| ⑧ | **Script → BN Video** | ffmpeg Ken Burns zoompan + Edge/XTTS narration | ✅ OFFLINE (narration falls back per Tab②/③ rules) | MP4 with narration |
+| ⑧ | **Script → BN Video** | ffmpeg Ken Burns zoompan + Edge narration | ⚠️ Online by default (Tab ③ can generate offline narration separately) | MP4 with narration |
 | ⑨ | **Image → Talking Avatar** | SadTalker (optional install) | ✅ OFFLINE | Talking-head MP4 |
 | ⑩ | **Local Agent + Live BN Voice Call** | **Ollama (recommended) or llama.cpp** local LLM + faster-whisper STT + Edge/XTTS reply voice | ✅ OFFLINE | Chat + turn-based voice call |
 
@@ -43,7 +43,7 @@ chat/voice agent — runs entirely on your machine once its (optional) model is 
 
 ### Install & run
 ```bash
-git clone <this-repo>
+git clone https://github.com/umd81568-lab/Mac-devi.git
 cd Mac-devi
 ./setup_mac.sh   # creates ./venv, installs ffmpeg + core Python deps
 ./run_mac.sh     # starts the Gradio app at http://127.0.0.1:7860
@@ -52,7 +52,8 @@ Open the printed URL in your browser — that's it, no other app to install.
 
 ### Enable optional facilities
 The app starts immediately with STT, Edge TTS, audio editing, video editing,
-slideshow, and script-to-video all working out of the box (pure Python + ffmpeg).
+slideshow, and script-to-video all working out of the box. Note that Edge TTS
+and Script → BN Video narration use the Edge online endpoint by default.
 Three facilities use larger optional models — install only the ones you want:
 
 ```bash
@@ -62,6 +63,7 @@ python app/download_models.py --model xtts
 
 # Talking avatar (Tab 9)
 python app/download_models.py --model sadtalker
+pip install -e app/models/sadtalker_src --no-deps
 
 # Local chat/voice agent (Tab 10) — recommended path, no extra pip package:
 brew install ollama
@@ -125,6 +127,13 @@ brew install ffmpeg
 ```
 `setup_mac.sh` installs this automatically the first time; only needed manually if
 you moved/renamed your Homebrew install.
+
+### `pip install` fails with wheel/build errors
+Use Python 3.11 explicitly for best compatibility:
+```bash
+brew install python@3.11
+BHASHAMEDIA_PYTHON=python3.11 ./setup_mac.sh
+```
 
 ### Tab ③ / ⑨ / ⑩ say a model is missing
 These are optional facilities by design (they need multi-GB downloads). Run the

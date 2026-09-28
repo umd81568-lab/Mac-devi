@@ -34,7 +34,7 @@ CATALOG = {
     },
     "sadtalker": {
         "repo": "vinthony/SadTalker",
-        "dest": "sadtalker",
+        "dest": "sadtalker_src",
         "size": "~3.5 GB",
         "used_by": "Tab 9 (Image -> Talking Avatar)",
     },
