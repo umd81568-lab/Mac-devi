@@ -14,7 +14,12 @@ export PYTORCH_ENABLE_MPS_FALLBACK=1
 export GRADIO_SERVER_NAME="${GRADIO_SERVER_NAME:-127.0.0.1}"
 export GRADIO_SERVER_PORT="${GRADIO_SERVER_PORT:-7860}"
 
-echo "Starting BhashaMedia AI at http://${GRADIO_SERVER_NAME}:${GRADIO_SERVER_PORT}"
+DISPLAY_HOST="$GRADIO_SERVER_NAME"
+if [ "$GRADIO_SERVER_NAME" = "0.0.0.0" ] || [ "$GRADIO_SERVER_NAME" = "::" ]; then
+  DISPLAY_HOST="127.0.0.1"
+fi
+echo "Starting BhashaMedia AI (bind ${GRADIO_SERVER_NAME}:${GRADIO_SERVER_PORT})"
+echo "Open in browser: http://${DISPLAY_HOST}:${GRADIO_SERVER_PORT}"
 echo "Tip: Tabs ③/⑨/⑩ need optional model setup (see MODELS.md)."
 
 python app/app.py
