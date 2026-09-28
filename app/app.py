@@ -383,7 +383,7 @@ def script_to_video(script_text, images, voice_label):
     shutil.rmtree(tmp_dir, ignore_errors=True)
     if code != 0:
         return None, f"mux failed: {err[-500:]}"
-    return out_path, "OK — B-roll Ken Burns + Bangla narration (fully local/offline path)."
+    return out_path, "OK — B-roll Ken Burns + Bangla narration (Edge TTS online by default)."
 
 
 # ---------------------------------------------------------------------------
@@ -401,8 +401,16 @@ def image_to_avatar(image_path, audio_path, script_text, voice_label):
         return None, "অডিও দিন বা স্ক্রিপ্ট লিখুন (provide audio or a script)."
     audio_path = _safe_path(audio_path)
 
-    sadtalker_dir = os.path.join(MODELS_DIR, "sadtalker_src")
-    inference_py = os.path.join(sadtalker_dir, "inference.py")
+    sadtalker_candidates = [
+        os.path.join(MODELS_DIR, "sadtalker_src"),  # current recommended path
+        os.path.join(MODELS_DIR, "sadtalker"),      # legacy path from older setup flows
+    ]
+    inference_py = ""
+    for cand in sadtalker_candidates:
+        candidate_inference = os.path.join(cand, "inference.py")
+        if os.path.exists(candidate_inference):
+            inference_py = candidate_inference
+            break
     if not os.path.exists(inference_py):
         return None, (
             "SadTalker is not installed/downloaded. This is an optional facility.\n"

@@ -13,7 +13,7 @@ discrete GPU, (3) good Bangla-language quality where relevant.
 |---|---|---|---|
 | Speech → Text | `Systran/faster-whisper-large-v3` (CTranslate2 int8) | MIT | `python app/download_models.py --model whisper` |
 | Offline voice clone | `coqui/XTTS-v2` via `TTS==0.22.0` | Coqui Public Model License (CPML) — review before commercial voice cloning | `pip install TTS==0.22.0` then `python app/download_models.py --model xtts` |
-| Image → Talking Avatar | `SadTalker v0.0.2` (+ optional GFPGAN v1.4 sharpening) | MIT | `python app/download_models.py --model sadtalker`, then `pip install -e app/models/sadtalker_src --no-deps` (source checkout required — see SadTalker repo) |
+| Image → Talking Avatar | `SadTalker v0.0.2` (+ optional GFPGAN v1.4 sharpening) | MIT | `python app/download_models.py --model sadtalker`, then `pip install -e app/models/sadtalker_src --no-deps` |
 | Local open-source LLM agent | **Ollama + Llama 3.1 8B Instruct** (recommended, no build step) | Meta Llama 3.1 Community License | `brew install ollama && ollama pull llama3.1 && ollama serve` |
 | Local agent (advanced/offline binary) | `llama-cpp-python` + `Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf` | Meta Llama 3.1 Community License | `pip install llama-cpp-python` then `python app/download_models.py --model llama` |
 
