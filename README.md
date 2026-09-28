@@ -43,7 +43,7 @@ chat/voice agent — runs entirely on your machine once its (optional) model is 
 
 ### Install & run
 ```bash
-git clone https://github.com/umd81568-lab/Mac-devi.git
+git clone https://github.com/umd81568-lab/Mac-devi.git Mac-devi
 cd Mac-devi
 ./setup_mac.sh   # creates ./venv, installs ffmpeg + core Python deps
 ./run_mac.sh     # starts the Gradio app at http://127.0.0.1:7860
